@@ -3,7 +3,7 @@ name: Keep Render Alive
 on:
   schedule:
     - cron: "*/5 * * * *"  # 🔁 รันทุก 5 นาที (UTC)
-  workflow_dispatch:        # ✅ สามารถกด “Run workflow” ด้วยตัวเองได้ด้วย
+  workflow_dispatch:        # ✅ กด “Run workflow” เองได้ด้วย
 
 jobs:
   ping:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping FastAPI to keep Render awake
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://line-bot-shift.onrender.com/)
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://shift-scheduler.onrender.com/)
           echo "Response code: $response"
           if [ "$response" -ne 200 ]; then
             echo "❌ API is not responding properly"
