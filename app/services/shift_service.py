@@ -87,7 +87,7 @@ def shifts_to_vertical(shift: dict):
             ("02.00-04.00", "shift_6"),
             ("04.00-06.00", "shift_7"),
         ]
-    elif shift["day_off"] == True and count == 9:
+    elif shift["day_off"] == True and count > 10:
         # 🔴 วันหยุด → มีผลัด 1–8 + Cafe
         SHIFT_LABELS = [
             ("14.00-16.00", "shift_1"),
