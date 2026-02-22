@@ -11,3 +11,7 @@ app.include_router(shifts.router)
 @app.get("/")
 def root():
     return {"status": "ok"}
+
+@app.get("/ping")
+def ping():
+    return {"ping": "pong"}
