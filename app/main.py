@@ -12,6 +12,6 @@ app.include_router(shifts.router)
 def root():
     return {"status": "ok"}
 
-@app.get("/ping")
+@app.api_route("/ping", methods=["GET", "HEAD"])
 def ping():
-    return {"ping": "pong"}
+    return Response(content='{"ping": "pong"}', media_type="application/json")
