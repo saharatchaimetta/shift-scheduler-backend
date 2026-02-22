@@ -18,7 +18,8 @@ parser = WebhookParser(LINE_CHANNEL_SECRET)
 
 def build_shift_flex(target_date, shift: dict):
     contents = []
-
+    print('shift_log2')
+    print(shift)
     # ===== สถานะวัน =====
     if shift.get("day_off"):
         day_status = {
