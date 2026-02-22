@@ -14,4 +14,4 @@ def root():
 
 @app.api_route("/ping", methods=["GET", "HEAD"])
 def ping():
-    return Response(content='{"ping": "pong"}', media_type="application/json")
+    return Response(content="pong", media_type="text/plain")
