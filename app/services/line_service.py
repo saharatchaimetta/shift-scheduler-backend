@@ -54,6 +54,8 @@ def build_shift_flex(target_date, shift: dict):
 
     # ===== ผลัด =====
     for label, value in shifts_to_vertical(shift):
+        print(label)
+        print(value)
         contents.append({
             "type": "box",
             "layout": "baseline",
