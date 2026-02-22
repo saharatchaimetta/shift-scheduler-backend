@@ -65,6 +65,7 @@ def get_shift_with_names(db: Session, target_date: date):
 def shifts_to_vertical(shift: dict):
     rows = []
     count = sum(1 for v in shift.values() if v != "-")
+    print('count_log')
     print(count)
     if shift["day_off"] == True and count == 11:
         # 🔴 วันหยุด → มีผลัด 1–8 เท่านั้น
