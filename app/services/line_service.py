@@ -134,47 +134,103 @@ def build_shift_flex(target_date, shift: dict):
             }
         }
     )
-
-
 def handle_webhook(body: str, signature: str):
-    events = parser.parse(body, signature)
+    try:
+        events = parser.parse(body, signature)
 
-    for event in events:
-        target_date = None  # ⭐ สำคัญมาก
-
-        # ===== กรณีเลือกวันที่จาก datepicker =====
-        if isinstance(event, PostbackEvent):
-            if event.postback.data == "pick_shift_date":
-                selected_date = event.postback.params.get("date")  # YYYY-MM-DD
-                target_date = date.fromisoformat(selected_date)
-
-        # ===== ข้อความปกติ =====
-        elif isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
-            text = event.message.text.strip()
-
-            if text == "เวรวันนี้":
-                target_date = date.today()
-            elif text == "เวรพรุ่งนี้":
-                target_date = date.today() + timedelta(days=1)
-            else:
-                continue  # ❗ อย่า return
-
-        # ===== ถ้าไม่ใช่คำสั่ง → ข้าม =====
-        if not target_date:
-            continue
-
-        # ===== ดึงเวร =====
+        # เปิด DB ครั้งเดียว
         db = SessionLocal()
-        shift = get_shift_with_names(db, target_date)
-        db.close()
 
-        if not shift:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="❌ ไม่พบข้อมูลเวร")
-            )
-            continue
-        print('shift_log1')
-        print(shift)
-        flex = build_shift_flex(target_date, shift)
-        line_bot_api.reply_message(event.reply_token, flex)
+        try:
+            for event in events:
+                try:
+                    target_date = None
+
+                    # ===== Postback =====
+                    if isinstance(event, PostbackEvent):
+                        if event.postback.data == "pick_shift_date":
+                            selected_date = event.postback.params.get("date")
+                            if selected_date:
+                                target_date = date.fromisoformat(selected_date)
+
+                    # ===== Text =====
+                    elif isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
+                        text = event.message.text.strip()
+
+                        if text == "เวรวันนี้":
+                            target_date = date.today()
+                        elif text == "เวรพรุ่งนี้":
+                            target_date = date.today() + timedelta(days=1)
+                        else:
+                            continue
+
+                    if not target_date:
+                        continue
+
+                    # ===== Query DB =====
+                    shift = get_shift_with_names(db, target_date)
+
+                    if not shift:
+                        line_bot_api.reply_message(
+                            event.reply_token,
+                            TextSendMessage(text="❌ ไม่พบข้อมูลเวร")
+                        )
+                        continue
+
+                    flex = build_shift_flex(target_date, shift)
+                    line_bot_api.reply_message(event.reply_token, flex)
+
+                except Exception as e:
+                    print("Event error:", e)
+
+        finally:
+            db.close()
+
+    except InvalidSignatureError:
+        print("Invalid signature")
+
+    except Exception as e:
+        print("Webhook fatal error:", e)
+
+# def handle_webhook(body: str, signature: str):
+#     events = parser.parse(body, signature)
+
+#     for event in events:
+#         target_date = None  # ⭐ สำคัญมาก
+
+#         # ===== กรณีเลือกวันที่จาก datepicker =====
+#         if isinstance(event, PostbackEvent):
+#             if event.postback.data == "pick_shift_date":
+#                 selected_date = event.postback.params.get("date")  # YYYY-MM-DD
+#                 target_date = date.fromisoformat(selected_date)
+
+#         # ===== ข้อความปกติ =====
+#         elif isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
+#             text = event.message.text.strip()
+
+#             if text == "เวรวันนี้":
+#                 target_date = date.today()
+#             elif text == "เวรพรุ่งนี้":
+#                 target_date = date.today() + timedelta(days=1)
+#             else:
+#                 continue  # ❗ อย่า return
+
+#         # ===== ถ้าไม่ใช่คำสั่ง → ข้าม =====
+#         if not target_date:
+#             continue
+
+#         # ===== ดึงเวร =====
+#         db = SessionLocal()
+#         shift = get_shift_with_names(db, target_date)
+#         db.close()
+
+#         if not shift:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="❌ ไม่พบข้อมูลเวร")
+#             )
+#             continue
+#         print('shift_log1')
+#         print(shift)
+#         flex = build_shift_flex(target_date, shift)
+#         line_bot_api.reply_message(event.reply_token, flex)
