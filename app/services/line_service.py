@@ -137,11 +137,11 @@ def build_shift_flex(target_date, shift: dict):
         }
     )
 
-
 # def handle_webhook(body: str, signature: str):
 #     events = parser.parse(body, signature)
 
 #     for event in events:
+#         target_date = None  # ⭐ สำคัญมาก
 
 #         # ===== กรณีเลือกวันที่จาก datepicker =====
 #         if isinstance(event, PostbackEvent):
@@ -158,7 +158,11 @@ def build_shift_flex(target_date, shift: dict):
 #             elif text == "เวรพรุ่งนี้":
 #                 target_date = date.today() + timedelta(days=1)
 #             else:
-#                 return
+#                 continue  # ❗ อย่า return
+
+#         # ===== ถ้าไม่ใช่คำสั่ง → ข้าม =====
+#         if not target_date:
+#             continue
 
 #         # ===== ดึงเวร =====
 #         db = SessionLocal()
@@ -170,52 +174,62 @@ def build_shift_flex(target_date, shift: dict):
 #                 event.reply_token,
 #                 TextSendMessage(text="❌ ไม่พบข้อมูลเวร")
 #             )
-#             return
+#             continue
+
 #         print(shift)
 #         flex = build_shift_flex(target_date, shift)
 #         line_bot_api.reply_message(event.reply_token, flex)
 
-
-
 def handle_webhook(body: str, signature: str):
-    events = parser.parse(body, signature)
+    try:
+        events = parser.parse(body, signature)
 
-    for event in events:
-        target_date = None  # ⭐ สำคัญมาก
-
-        # ===== กรณีเลือกวันที่จาก datepicker =====
-        if isinstance(event, PostbackEvent):
-            if event.postback.data == "pick_shift_date":
-                selected_date = event.postback.params.get("date")  # YYYY-MM-DD
-                target_date = date.fromisoformat(selected_date)
-
-        # ===== ข้อความปกติ =====
-        elif isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
-            text = event.message.text.strip()
-
-            if text == "เวรวันนี้":
-                target_date = date.today()
-            elif text == "เวรพรุ่งนี้":
-                target_date = date.today() + timedelta(days=1)
-            else:
-                continue  # ❗ อย่า return
-
-        # ===== ถ้าไม่ใช่คำสั่ง → ข้าม =====
-        if not target_date:
-            continue
-
-        # ===== ดึงเวร =====
+        # เปิด DB แค่ครั้งเดียว
         db = SessionLocal()
-        shift = get_shift_with_names(db, target_date)
+
+        for event in events:
+            try:
+                target_date = None
+
+                # ===== Postback =====
+                if isinstance(event, PostbackEvent):
+                    if event.postback.data == "pick_shift_date":
+                        selected_date = event.postback.params.get("date")
+                        target_date = date.fromisoformat(selected_date)
+
+                # ===== Text =====
+                elif isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
+                    text = event.message.text.strip()
+
+                    if text == "เวรวันนี้":
+                        target_date = date.today()
+                    elif text == "เวรพรุ่งนี้":
+                        target_date = date.today() + timedelta(days=1)
+                    else:
+                        continue
+
+                if not target_date:
+                    continue
+
+                shift = get_shift_with_names(db, target_date)
+
+                if not shift:
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text="❌ ไม่พบข้อมูลเวร")
+                    )
+                    continue
+
+                flex = build_shift_flex(target_date, shift)
+                line_bot_api.reply_message(event.reply_token, flex)
+
+            except Exception as e:
+                print("Event error:", e)
+
         db.close()
 
-        if not shift:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="❌ ไม่พบข้อมูลเวร")
-            )
-            continue
+    except InvalidSignatureError:
+        print("Invalid signature")
 
-        print(shift)
-        flex = build_shift_flex(target_date, shift)
-        line_bot_api.reply_message(event.reply_token, flex)
+    except Exception as e:
+        print("Webhook fatal error:", e)
