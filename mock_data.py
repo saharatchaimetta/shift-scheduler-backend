@@ -14,7 +14,7 @@ def change_code_to_name(dataframe_change:pd.DataFrame):
             name,
             code_name
         FROM
-            user_name_bg_1000
+            line_bot.user_name_bg_1000
         order BY
             last_update DESC
 
@@ -69,7 +69,7 @@ def get_data_from_db():
             status
 
         FROM
-            user_name_bg_1000
+            line_bot.user_name_bg_1000
         order BY
             last_update DESC
 
@@ -175,7 +175,7 @@ def shift_schedule(data_name_on):
 
 
 
-    # DatabaseConnection("BOT").upsert_dataframe(df_schedule,"shift_schedule",["date"],"temp_shift_schedule",1000)
+    # DatabaseConnection("BOT").upsert_dataframe(df_schedule,"line_bot.shift_schedule",["date"],"temp_shift_schedule",1000)
 
 
 
