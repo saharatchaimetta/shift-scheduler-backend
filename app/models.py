@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 
 class shift_schedule(Base):
     __tablename__ = "shift_schedule"
+    __table_args__ = {"schema": "line_bot"}
 
     date = Column(Date, primary_key=True)
     cafe_schedule = Column(String, nullable=False)
@@ -22,6 +23,7 @@ class shift_schedule(Base):
 
 class ShiftLog(Base):
     __tablename__ = "user_name_bg_1000"
+    __table_args__ = {"schema": "line_bot"}
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
